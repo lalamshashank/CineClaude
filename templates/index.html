@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineClaude — Movie Discovery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #040711;
+      --glass-bg: rgba(10, 16, 32, 0.86);
+      --glass-border: rgba(56, 189, 248, 0.25);
+      --accent: #0ea5e9;
+      --accent-glow: rgba(14, 165, 233, 0.5);
+      --cyan: #38bdf8;
+      --violet: #818cf8;
+      --text-main: #f8fafc;
+      --text-muted: #cbd5e1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 60px 20px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .cinema-marquee-wrapper {
+      position: fixed;
+      inset: -10%;
+      z-index: 0;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      transform: rotate(-5deg) scale(1.06);
+      opacity: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .marquee-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      will-change: transform;
+    }
+
+    .scroll-up { animation: marqueeUp 38s linear infinite; }
+    .scroll-down { animation: marqueeDown 42s linear infinite; }
+    .marquee-column:nth-child(3) { animation-duration: 34s; }
+    .marquee-column:nth-child(4) { animation-duration: 46s; }
+    .marquee-column:nth-child(5) { animation-duration: 36s; }
+    .marquee-column:nth-child(6) { animation-duration: 40s; }
+
+    @keyframes marqueeUp {
+      0% { transform: translateY(0%); }
+      100% { transform: translateY(-50%); }
+    }
+
+    @keyframes marqueeDown {
+      0% { transform: translateY(-50%); }
+      100% { transform: translateY(0%); }
+    }
+
+    .poster-tile {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+    }
+
+    .poster-tile img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(1.22) saturate(1.25) contrast(1.08);
+    }
+
+    .poster-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 24px 10px 8px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.94), transparent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.94);
+      text-transform: uppercase;
+    }
+
+    .cinema-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background:
+        radial-gradient(circle at center, rgba(4, 7, 17, 0.15) 0%, rgba(4, 7, 17, 0.65) 95%),
+        linear-gradient(180deg, rgba(4, 7, 17, 0.35) 0%, rgba(4, 7, 17, 0.12) 50%, rgba(4, 7, 17, 0.45) 100%);
+      pointer-events: none;
+    }
+
+    .wrapper {
+      max-width: 800px;
+      width: 100%;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 44px;
+    }
+
+    .pill-tag {
+      display: inline-block;
+      background: rgba(14, 165, 233, 0.22);
+      border: 1px solid rgba(56, 189, 248, 0.55);
+      color: #7dd3fc;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    h1 {
+      font-size: clamp(2.6rem, 6vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      display: inline-block;
+      margin-bottom: 10px;
+      cursor: default;
+      background: linear-gradient(110deg, #ffffff 15%, #38bdf8 38%, #818cf8 58%, #ffffff 80%);
+      background-size: 250% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: titleShimmer 4.5s linear infinite, titleFloat 3.5s ease-in-out infinite;
+      filter: drop-shadow(0 6px 24px rgba(14, 165, 233, 0.6));
+      transition: transform 0.3s ease, filter 0.3s ease;
+    }
+
+    h1:hover {
+      transform: scale(1.06);
+      filter: drop-shadow(0 0 28px rgba(56, 189, 248, 0.9));
+    }
+
+    @keyframes titleShimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 250% center; }
+    }
+
+    @keyframes titleFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .subtitle {
+      color: #f1f5f9;
+      font-size: 17px;
+      font-weight: 600;
+      max-width: 530px;
+      margin: 0 auto;
+      line-height: 1.5;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
+    }
+
+    .search-panel {
+      position: relative;
+      background: var(--glass-bg);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 24px rgba(14, 165, 233, 0.15);
+    }
+
+    .popcorn-sticker {
+      position: absolute;
+      top: -68px;
+      right: 28px;
+      z-index: 15;
+      width: 82px;
+      height: 82px;
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.65));
+    }
+
+    .popcorn-sticker svg {
+      width: 100%;
+      height: 100%;
+      animation: stickerFloat 3s ease-in-out infinite;
+    }
+
+    .popcorn-sticker:hover {
+      transform: scale(1.15) rotate(-6deg);
+      filter: drop-shadow(0 10px 24px rgba(56, 189, 248, 0.85));
+    }
+
+    .popcorn-sticker .bubble {
+      position: absolute;
+      top: -26px;
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      background: #38bdf8;
+      color: #040711;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+    }
+
+    .popcorn-sticker:hover .bubble {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @keyframes stickerFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(3deg); }
+    }
+
+    .search-bar { display: flex; gap: 12px; }
+
+    input {
+      flex: 1;
+      padding: 15px 18px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      background: rgba(12, 24, 48, 0.92);
+      color: #e0f2fe;
+      font-size: 16px;
+      font-family: inherit;
+      box-shadow: inset 0 0 14px rgba(14, 165, 233, 0.15);
+      transition: all 0.2s ease;
+    }
+
+    input::placeholder { color: #7dd3fc; opacity: 0.75; }
+
+    input:focus {
+      outline: none;
+      border-color: #38bdf8;
+      background: rgba(15, 32, 64, 0.96);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35), inset 0 0 16px rgba(14, 165, 233, 0.25);
+    }
+
+    button.primary-btn {
+      padding: 15px 26px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 15px;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 114, 255, 0.55);
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    button.primary-btn:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #38bdf8, #2563eb);
+    }
+
+    .language-prompt {
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 14px;
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+    }
+
+    .lang-prompt-header { font-size: 14.5px; font-weight: 700; color: #e0f2fe; margin-bottom: 6px; }
+    .detected-theme-bar { font-size: 12.5px; color: #7dd3fc; margin-bottom: 14px; }
+    .lang-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+
+    .lang-pill {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: rgba(12, 24, 48, 0.85);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .lang-pill.active {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+
+    .confirm-lang-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 13.5px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .quick-picks { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .quick-label { font-size: 13px; color: var(--text-muted); margin-right: 4px; }
+
+    .chip {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #e0f2fe;
+      padding: 6px 13px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .chip:hover { background: rgba(14, 165, 233, 0.3); border-color: var(--cyan); color: #fff; }
+
+    .results-header {
+      margin: 32px 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
+    }
+
+    .refresh-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.55);
+      background: rgba(14, 165, 233, 0.22);
+      color: #e0f2fe;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .refresh-btn:hover { background: linear-gradient(135deg, #00c6ff, #0072ff); color: #ffffff; }
+
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; }
+
+    .movie-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .movie-card:hover { transform: translateY(-5px); border-color: rgba(56, 189, 248, 0.7); }
+
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .movie-title { font-size: 19px; font-weight: 700; color: #fff; }
+
+    .year-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #7dd3fc;
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: 6px;
+    }
+
+    .match-pill {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      color: #34d399;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .movie-genre { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+    .theme-badge { font-size: 11.5px; color: #38bdf8; font-weight: 700; margin-bottom: 6px; }
+    .algo-breakdown { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+
+    .algo-chip {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(129, 140, 248, 0.16);
+      border: 1px solid rgba(129, 140, 248, 0.38);
+      color: #c7d2fe;
+    }
+
+    .movie-snippet { font-size: 12.5px; color: #94a3b8; line-height: 1.45; margin-bottom: 14px; }
+    .bar-track { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--cyan), #34d399); border-radius: 999px; }
+
+    .error-msg {
+      margin-top: 24px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      background: rgba(14, 165, 233, 0.22);
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      color: #bae6fd;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) { .cinema-marquee-wrapper { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 540px) {
+      .cinema-marquee-wrapper { grid-template-columns: repeat(3, 1fr); }
+      .search-bar { flex-direction: column; }
+      button.primary-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cinema-marquee-wrapper" id="cinemaWall"></div>
+  <div class="cinema-overlay"></div>
+
+  <div class="wrapper">
+    <div class="hero">
+      <h1>CineClaude</h1>
+      <p class="subtitle">Getting bored? Pick your mood!</p>
+    </div>
+
+    <div class="search-panel">
+      <div class="popcorn-sticker" onclick="quickSearch('Rush')" title="Click for a surprise pick!">
+        <svg viewBox="0 0 120 120" width="84" height="84" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="38" cy="38" r="16" fill="#fde047" stroke="#eab308" stroke-width="2"/>
+          <circle cx="60" cy="30" r="18" fill="#fef08a" stroke="#eab308" stroke-width="2"/>
+          <circle cx="82" cy="38" r="16" fill="#fde047" stroke="#eab308" stroke-width="2"/>
+          <circle cx="48" cy="46" r="15" fill="#fef9c3"/>
+          <circle cx="72" cy="46" r="15" fill="#fef08a"/>
+          <polygon points="28,52 92,52 82,110 38,110" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+          <polygon points="41,52 53,52 49,110 42,110" fill="#0284c7"/>
+          <polygon points="67,52 79,52 78,110 71,110" fill="#0284c7"/>
+          <rect x="33" y="64" width="54" height="18" rx="4" fill="#0f172a"/>
+          <rect x="37" y="67" width="20" height="12" rx="2" fill="#38bdf8"/>
+          <rect x="63" y="67" width="20" height="12" rx="2" fill="#f43f5e"/>
+          <path d="M 50 90 Q 60 100 70 90" stroke="#0f172a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span class="bubble">Try Me!</span>
+      </div>
+
+      <div class="search-bar">
+        <input id="movieInput" placeholder="Type ANY movie name (e.g., Khaleja, Inception, Rush, 3 Idiots)..." />
+        <button class="primary-btn" onclick="prepareLanguageStep()">Find Matches</button>
+      </div>
+
+      <div id="languageStep" style="display:none;"></div>
+
+      <div class="quick-picks">
+        <span class="quick-label">Try instantly:</span>
+        <span class="chip" onclick="quickSearch('Inception')">Inception</span>
+        <span class="chip" onclick="quickSearch('Khaleja')">Khaleja</span>
+        <span class="chip" onclick="quickSearch('Rush')">Rush</span>
+        <span class="chip" onclick="quickSearch('Kalki 2898 AD')">Kalki 2898 AD</span>
+        <span class="chip" onclick="quickSearch('3 Idiots')">3 Idiots</span>
+      </div>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const celebrityList = [
+      { name: "Christopher Nolan", role: "Director", wiki: "Christopher_Nolan" },
+      { name: "Mahesh Babu", role: "Hero", wiki: "Mahesh_Babu" },
+      { name: "S. S. Rajamouli", role: "Director", wiki: "S._S._Rajamouli" },
+      { name: "Anushka Shetty", role: "Heroine", wiki: "Anushka_Shetty" },
+      { name: "Leonardo DiCaprio", role: "Hero", wiki: "Leonardo_DiCaprio" },
+      { name: "Samantha Ruth Prabhu", role: "Heroine", wiki: "Samantha_Ruth_Prabhu" },
+      { name: "Nani", role: "Hero", wiki: "Nani_(actor)" },
+      { name: "Scarlett Johansson", role: "Heroine", wiki: "Scarlett_Johansson" },
+      { name: "Christian Bale", role: "Hero", wiki: "Christian_Bale" },
+      { name: "Sai Pallavi", role: "Heroine", wiki: "Sai_Pallavi" },
+      { name: "Ram Charan", role: "Hero", wiki: "Ram_Charan" },
+      { name: "N. T. Rama Rao Jr.", role: "Hero", wiki: "N._T._Rama_Rao_Jr." },
+      { name: "Ana de Armas", role: "Heroine", wiki: "Ana_de_Armas" },
+      { name: "Matt Damon", role: "Hero", wiki: "Matt_Damon" },
+      { name: "Mrunal Thakur", role: "Heroine", wiki: "Mrunal_Thakur" },
+      { name: "Quentin Tarantino", role: "Director", wiki: "Quentin_Tarantino" },
+      { name: "Trivikram Srinivas", role: "Director", wiki: "Trivikram_Srinivas" },
+      { name: "Denis Villeneuve", role: "Director", wiki: "Denis_Villeneuve" },
+      { name: "Allu Arjun", role: "Hero", wiki: "Allu_Arjun" },
+      { name: "Rashmika Mandanna", role: "Heroine", wiki: "Rashmika_Mandanna" },
+      { name: "Prabhas", role: "Hero", wiki: "Prabhas" },
+      { name: "Deepika Padukone", role: "Heroine", wiki: "Deepika_Padukone" },
+      { name: "Cillian Murphy", role: "Hero", wiki: "Cillian_Murphy" },
+      { name: "Zendaya", role: "Heroine", wiki: "Zendaya" },
+      { name: "Tom Cruise", role: "Hero", wiki: "Tom_Cruise" },
+      { name: "Pooja Hegde", role: "Heroine", wiki: "Pooja_Hegde" },
+      { name: "Keanu Reeves", role: "Hero", wiki: "Keanu_Reeves" },
+      { name: "Margot Robbie", role: "Heroine", wiki: "Margot_Robbie" },
+      { name: "Steven Spielberg", role: "Director", wiki: "Steven_Spielberg" },
+      { name: "Kamal Haasan", role: "Hero", wiki: "Kamal_Haasan" }
+    ];
+
+    async function loadCelebrityWall() {
+      const titles = celebrityList.map(c => c.wiki).join("|");
+      const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles)}&prop=pageimages&format=json&pithumbsize=400&origin=*`;
+      let validCelebrities = [];
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        const pages = Object.values(data.query.pages);
+        celebrityList.forEach(celeb => {
+          const match = pages.find(p => p.title.toLowerCase().replace(/\s+/g, "_") === celeb.wiki.toLowerCase() && p.thumbnail);
+          if (match && match.thumbnail && match.thumbnail.source) {
+            validCelebrities.push({ name: celeb.name, role: celeb.role, url: match.thumbnail.source });
+          }
+        });
+      } catch (err) {}
+
+      if (!validCelebrities.length) return;
+      while (validCelebrities.length < 30) validCelebrities = validCelebrities.concat(validCelebrities);
+      validCelebrities = validCelebrities.slice(0, 30);
+
+      const wall = document.getElementById("cinemaWall");
+      wall.innerHTML = "";
+      const numCols = 6;
+      const perCol = Math.ceil(validCelebrities.length / numCols);
+      for (let c = 0; c < numCols; c++) {
+        const slice = validCelebrities.slice(c * perCol, (c + 1) * perCol);
+        const loopItems = [...slice, ...slice];
+        wall.insertAdjacentHTML("beforeend", `
+          <div class="marquee-column ${c % 2 === 0 ? "scroll-up" : "scroll-down"}">
+            ${loopItems.map(person => `
+              <div class="poster-tile">
+                <img src="${person.url}" alt="${person.name}" />
+                <div class="poster-label">${person.name} • ${person.role}</div>
+              </div>
+            `).join("")}
+          </div>
+        `);
+      }
+    }
+    loadCelebrityWall();
+
+    const availableLanguages = [
+      { id: "telugu", label: "Telugu" },
+      { id: "tamil", label: "Tamil" },
+      { id: "hindi", label: "Hindi" },
+      { id: "malayalam", label: "Malayalam" },
+      { id: "kannada", label: "Kannada" },
+      { id: "english", label: "English" },
+      { id: "korean", label: "Korean" },
+      { id: "all", label: "All Languages" }
+    ];
+
+    let activeMovieContext = null;
+    let selectedLanguages = new Set();
+    let shownTitles = new Set();
+    let refreshBatchCount = 0;
+
+    document.getElementById("movieInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") prepareLanguageStep();
+    });
+
+    function quickSearch(title) {
+      document.getElementById("movieInput").value = title;
+      prepareLanguageStep();
+    }
+
+    // CONNECTS TO PYTHON FLASK ROUTE: /api/analyze
+    async function prepareLanguageStep() {
+      const typedMovie = document.getElementById("movieInput").value.trim();
+      const langBox = document.getElementById("languageStep");
+      const resultsDiv = document.getElementById("results");
+      if (!typedMovie) return;
+
+      resultsDiv.innerHTML = "";
+      langBox.style.display = "block";
+      langBox.innerHTML = `<div class="lang-prompt"><div class="lang-prompt-header" style="color:#7dd3fc;">Python backend analyzing "${typedMovie}"...</div></div>`;
+
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: typedMovie })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          langBox.innerHTML = `<div class="error-msg" style="margin-top:0;">${data.error}</div>`;
+          return;
+        }
+
+        activeMovieContext = {
+          cleanTargetTitle: data.cleanTitle,
+          pageTitle: data.pageTitle,
+          extract: data.extract,
+          meta: data.meta
+        };
+        selectedLanguages = new Set([data.meta.detectedLang || "telugu"]);
+
+        const genreSummary = data.meta.genres.length
+          ? data.meta.genres.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(" • ")
+          : "Drama";
+        const themeSummary = data.meta.themes.map(t => t.label).join(" & ");
+
+        renderLanguageSelector(data.cleanTitle, data.meta.year, genreSummary, themeSummary);
+      } catch (err) {
+        langBox.innerHTML = `<div class="error-msg" style="margin-top:0;">Cannot connect to Python backend. Make sure "python app.py" is running and open http://127.0.0.1:5000</div>`;
+      }
+    }
+
+    function renderLanguageSelector(title, year, genreSummary, themeSummary) {
+      const langBox = document.getElementById("languageStep");
+      langBox.innerHTML = `
+        <div class="language-prompt">
+          <div class="lang-prompt-header">
+            Which language(s) do you want recommendations in for <span style="color:#38bdf8;">"${title}${year ? " (" + year + ")" : ""}"</span>?
+          </div>
+          <div class="detected-theme-bar">
+            <strong>Detected Genre:</strong> ${genreSummary} &nbsp;|&nbsp; <strong>Story Theme:</strong> ${themeSummary}
+          </div>
+          <div class="lang-options">
+            ${availableLanguages.map(lang => `
+              <span class="lang-pill ${selectedLanguages.has(lang.id) ? "active" : ""}" onclick="toggleLanguage('${lang.id}')">
+                ${lang.label}
+              </span>
+            `).join("")}
+          </div>
+          <button class="confirm-lang-btn" onclick="executeLanguageRecommendations(false)">Show Matching Movies</button>
+        </div>
+      `;
+    }
+
+    function toggleLanguage(langId) {
+      if (langId === "all") {
+        selectedLanguages.clear();
+        selectedLanguages.add("all");
+      } else {
+        selectedLanguages.delete("all");
+        if (selectedLanguages.has(langId)) {
+          if (selectedLanguages.size > 1) selectedLanguages.delete(langId);
+        } else {
+          selectedLanguages.add(langId);
+        }
+      }
+      const { cleanTargetTitle, meta } = activeMovieContext;
+      const genreSummary = meta.genres.length
+        ? meta.genres.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(" • ")
+        : "Drama";
+      const themeSummary = meta.themes.map(t => t.label).join(" & ");
+      renderLanguageSelector(cleanTargetTitle, meta.year, genreSummary, themeSummary);
+    }
+
+    async function refreshRecommendations() {
+      if (!activeMovieContext) return;
+      refreshBatchCount++;
+      await executeLanguageRecommendations(true);
+    }
+
+    // CONNECTS TO PYTHON FLASK ROUTE: /api/recommend
+    async function executeLanguageRecommendations(isDeepRefresh = false) {
+      if (!activeMovieContext) return;
+      const { cleanTargetTitle, pageTitle, extract, meta } = activeMovieContext;
+      const resultsDiv = document.getElementById("results");
+
+      if (!isDeepRefresh) {
+        shownTitles = new Set([cleanTargetTitle.toLowerCase()]);
+        refreshBatchCount = 0;
+      }
+
+      const chosenLangs = Array.from(selectedLanguages);
+      const langLabels = chosenLangs.includes("all")
+        ? "All Languages"
+        : chosenLangs.map(l => l.charAt(0).toUpperCase() + l.slice(1)).join(", ");
+
+      resultsDiv.innerHTML = `<div class="results-header" style="text-align:center; color:#7dd3fc;">Python Scikit-Learn computing ${langLabels} matches...</div>`;
+
+      try {
+        const res = await fetch("/api/recommend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cleanTitle: cleanTargetTitle,
+            pageTitle: pageTitle,
+            extract: extract,
+            meta: meta,
+            languages: chosenLangs,
+            shownTitles: Array.from(shownTitles),
+            offset: refreshBatchCount * 10
+          })
+        });
+        const data = await res.json();
+        const batch = (data.recommendations || []).map(item => ({ ...item, langLabels }));
+
+        if (!batch.length) {
+          resultsDiv.innerHTML = `<div class="error-msg">No more unseen ${langLabels} movies found in that era. Try selecting another language!</div>`;
+          return;
+        }
+
+        renderMovieBatch(batch);
+      } catch (err) {
+        resultsDiv.innerHTML = `<div class="error-msg">Backend error while generating recommendations.</div>`;
+      }
+    }
+
+    function renderMovieBatch(batch) {
+      const { cleanTargetTitle, meta } = activeMovieContext;
+      const resultsDiv = document.getElementById("results");
+      batch.forEach(m => shownTitles.add(m.title.toLowerCase()));
+      const langLabels = batch[0]?.langLabels || "Selected";
+
+      resultsDiv.innerHTML = `
+        <div class="results-header">
+          <span>${langLabels} Matches for <span style="color:#38bdf8;">"${cleanTargetTitle}${meta.year ? " (" + meta.year + ")" : ""}"</span></span>
+          <button class="refresh-btn" onclick="refreshRecommendations()">Refresh Matches</button>
+        </div>
+        <div class="results-grid">
+          ${batch.map(m => `
+            <div class="movie-card" onclick="quickSearch('${m.title.replace(/'/g, "\\'")}')">
+              <div class="card-top">
+                <div class="movie-title">${m.title} <span class="year-badge">${m.year}</span></div>
+                <span class="match-pill">${m.hybridScore}% Match</span>
+              </div>
+              <div class="movie-genre">${m.genre}${m.hasBothYears ? (m.yearDiff === 0 ? " • Same Year" : " • ±" + m.yearDiff + " yrs") : ""}</div>
+              <div class="theme-badge">Story Theme: ${m.storyTheme}</div>
+              <div class="algo-breakdown">
+                <span class="algo-chip">Content: ${m.contentScore}%</span>
+                <span class="algo-chip">Collab: ${m.collabScore}%</span>
+                <span class="algo-chip">Hybrid: ${m.hybridScore}%</span>
+              </div>
+              <div class="movie-snippet">${m.snippet}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width: ${Math.max(m.hybridScore, 15)}%"></div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
