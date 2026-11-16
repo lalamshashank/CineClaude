@@ -641,7 +641,7 @@
 
         renderLanguageSelector(data.cleanTitle, data.meta.year, genreSummary, themeSummary);
       } catch (err) {
-        langBox.innerHTML = `<div class="error-msg" style="margin-top:0;">Cannot connect to Python backend. Make sure "python app.py" is running and open http://127.0.0.1:5000</div>`;
+        langBox.innerHTML = `<div class="error-msg" style="margin-top:0;">Unable to fetch recommendations right now. Please try again.</div>`;
       }
     }
 
