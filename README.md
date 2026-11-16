@@ -14,13 +14,5 @@ Project Structure
       README.md — Project documentation
       templates/index.html — Glassmorphism web interface
 
-How to Run Locally
-    1.Clone or download this repository:
-      git clone [https://github.com/lalamshashank/CineClaude.git](https://github.com/lalamshashank/CineClaude.git)
-      cd CineClaude
-    2.Install the required Python libraries:
-      pip install -r requirements.txt
-    3.Start the Python Flask backend server:
-      python app.py
-    4.Open the web app in your browser:
-      Navigate to http://localhost:5000 in Chrome or Edge (keep the terminal window open while using the app).
+Access the web app directly in any modern browser as GOGGLE CHROME or MICROSOFT EDGE
+    https://cineclaude.onrender.com
